@@ -1,0 +1,9 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - "/var/log/lmsapp.log"
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  enabled: true

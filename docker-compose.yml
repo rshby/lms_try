@@ -1,0 +1,78 @@
+version: "3.8"
+
+networks:
+  lms-network:
+    name: lms-network
+    driver: bridge
+
+volumes:
+  lmsvolume:
+    name: lmsvolume
+
+services:
+  lmsapp:
+    image: lmsapp:latest
+    build: .
+    container_name: lmsapp
+    ports:
+      - target: 6000
+        published: 6000
+        protocol: tcp
+        mode: host
+    environment:
+      - DB_HOST=host.docker.internal
+    networks:
+      - lms-network
+    volumes:
+      - lmsvolume:/app/log
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.15.1
+    container_name: filebeat
+    networks:
+      - lms-network
+    command: filebeat -e -strict.perms=false
+    user: root
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./var/run/docker.sock:/var/run/docker.sock
+      - lmsvolume:/var/log
+    depends_on:
+      - lmsapp
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.15.1
+    container_name: logstash
+    ports:
+      - "5044:5044"
+    networks:
+      - lms-network
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - lms-network
+    depends_on:
+      - lmsapp
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.15.1
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - lms-network
