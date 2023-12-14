@@ -13,6 +13,7 @@ import (
 
 func LoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logrus.SetOutput(os.Stdout)
 		startTime := time.Now()
 
 		// capture RequestBody
@@ -32,12 +33,11 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		// get responseBody
 		responseBody, err := CaptureResponseBody(customW)
 
-		logFilePath := "./log/lmsapp.log"
+		logFilePath := "/app/log/lmsapp.log"
 		file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			logrus.Fatalf("Error opening log file: %v", err)
 		}
-		defer file.Close()
 
 		logrus.SetOutput(file)
 		logrus.WithFields(logrus.Fields{
