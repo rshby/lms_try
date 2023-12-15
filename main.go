@@ -46,6 +46,7 @@ func main() {
 
 	r := mux.NewRouter() //.PathPrefix("/api/v1/").Subrouter()
 	r.Use(middleware.LoggerMiddleware)
+	r.Use(middleware.AuthMiddleware)
 
 	// generate user router
 	router.GenerateUserRouter(r, userHandler)

@@ -33,7 +33,13 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		// get responseBody
 		responseBody, err := CaptureResponseBody(customW)
 
-		logFilePath := "/app/log/lmsapp.log"
+		var logFilePath string
+		if os.Getenv("LOG_OS") == "linux" {
+			logFilePath = "/app/log/lmsapp.log"
+		} else {
+			logFilePath = "./log/lmsapp.log"
+		}
+
 		file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			logrus.Fatalf("Error opening log file: %v", err)
